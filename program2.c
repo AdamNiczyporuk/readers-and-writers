@@ -12,21 +12,26 @@
 // ReaderQ: 11 WriterQ: 10 [in: R:0 W:1]
 // Oznacza to, że w kolejce przed czytelnią czeka 10 pisarzy i 11 czytelników a sama czytelnia zajęta jest przez jednego pisarza. Komunikat należy wypisywać w momencie zmiany którejkolwiek z tych 
 
-
-////Zagłodzenie pisarzy !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-
+///ZAGŁODZENIE CZYTELNIKÓW !!!!!!!!!!!!!!!!!!!!!!
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <unistd.h>
-
-int R;
+int R; 
 int W;
+
 int readers_counter =0;
-int readersQueue=0;
-int writersQueue=0;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t lock_writer= PTHREAD_MUTEX_INITIALIZER;
+int writers_counter=0;
+
+int reading=0;
+int writting =0 ; 
+
+int waiting_writing=0;
+pthread_mutex_t reader_mutex;
+pthread_mutex_t writer_mutex;
+pthread_mutex_t lock_writer;
+pthread_mutex_t lock_reader;
 
 int stringToInt(const char *str) {
     // Sprawdź, czy łańcuch znaków jest pusty
@@ -46,54 +51,82 @@ int stringToInt(const char *str) {
     // Zwróć wynik konwersji
     return (int)value;
 }
-
-void *reader(void *r)
+void random_wait_time() 
 {
+        
+        int wait_time = rand() % 1000000 + 1; // Generowanie losowego czasu oczekiwania
+        usleep(wait_time); 
+}
+
+void* reader(void *r)
+{ 
+    srand(time(NULL));  
     while(1)
     {
-        pthread_mutex_lock(&mutex);
-        readers_counter++;
-        if (readers_counter == 1)
+        pthread_mutex_lock(&lock_reader);
+        pthread_mutex_lock(&reader_mutex);
+        if(reading == 0)
         {
             pthread_mutex_lock(&lock_writer);
         }
-        readersQueue--;
-        pthread_mutex_unlock(&mutex);
+        reading ++ ;
+        printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
 
-        printf("ReaderQ: %d WriterQ: %d [in: R:%d W:0]\n", readersQueue, writersQueue, readers_counter);
-        usleep(rand() % 1000000); // Symulacja czasu czytania
+        pthread_mutex_unlock(&reader_mutex);
+        pthread_mutex_unlock(&lock_reader);
 
-        pthread_mutex_lock(&mutex);
-        readers_counter--; 
-        if(readers_counter == 0)
+        random_wait_time();
+
+        pthread_mutex_lock(&reader_mutex);
+        reading--;
+        if(reading == 0)
         {
             pthread_mutex_unlock(&lock_writer);
         }
-        readersQueue++;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&reader_mutex);
 
-        usleep(rand() % 1000000);
+        random_wait_time() ;
     }
     return NULL;
-
-
 }
 
-void *writer(void *w)
-{ 
+void* writer(void *w)
+{
+    srand(time(NULL));
     while(1)
     {
+        pthread_mutex_lock(&writer_mutex); 
+        waiting_writing++;
+        if(waiting_writing==1)
+        {
+            pthread_mutex_lock(&lock_reader);
+        }
+        pthread_mutex_unlock(&writer_mutex);
+
+
         pthread_mutex_lock(&lock_writer);
-        writersQueue--;
-        printf("ReaderQ: %d WriterQ: %d [in: R:0 W:1]\n", readersQueue, writersQueue);
-        usleep(rand() % 1000000); // Symulacja czasu pisania
-        writersQueue++;
+        writting++;
+        printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
+        random_wait_time();
+        writting--;
         pthread_mutex_unlock(&lock_writer);
-        
-        usleep(rand() % 1000000); 
+
+
+        pthread_mutex_lock(&writer_mutex);
+        waiting_writing--;
+        if(waiting_writing==0)
+        {
+            pthread_mutex_unlock(&lock_reader);
+        }
+        pthread_mutex_unlock(&writer_mutex);
+
+        random_wait_time();
     }
     return NULL;
 }
+
+
+
 
 
 
@@ -105,32 +138,39 @@ int main(int argc, char  *argv[])
         return 1;
     }
     R = stringToInt(argv[1]);
-    W= stringToInt(argv[2]);
+    W = stringToInt(argv[2]);
+
+    pthread_mutex_init(&reader_mutex,NULL);
+    pthread_mutex_init(&writer_mutex,NULL);
+    pthread_mutex_init(&lock_writer,NULL);
+    pthread_mutex_init(&lock_reader,NULL);
+
+ 
 
     pthread_t readers[R];
     pthread_t writers[W];
 
-    readersQueue = R;
-    writersQueue = W;
+   readers_counter = R;
+    writers_counter = W;
+
+    
+
     for(int i =0 ;i<R;i++)
     {
         pthread_create(&readers[i],NULL,reader,NULL);
     }
-    for(int i =0; i <W ;i++)
+    for(int i=0; i<W;i++)
     {
         pthread_create(&writers[i],NULL,writer,NULL);
     }
-    for(int i =0;i<R;i++)
+    for(int i=0; i<R;i++)
     {
-        pthread_join(readers[i],NULL);
+        pthread_join(readers[i],NULL); 
     }
-    for(int i=0;i<W;i++)
+    for(int i =0; i<W ;i++)
     {
         pthread_join(writers[i],NULL);
     }
-    pthread_mutex_destroy(&mutex);
-    pthread_mutex_destroy(&lock_writer);
 
     return 0;
-
 }
