@@ -71,7 +71,7 @@ void* reader(void *r)
             pthread_mutex_lock(&lock_writer);
         }
         reading++;
-        prinf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
+        printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
 
         pthread_mutex_unlock(&mutex);
 
@@ -100,7 +100,7 @@ void* writer(void *w)
     { 
         pthread_mutex_lock(&mutex);
         writting++;
-        prinf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
+        printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n",readers_counter-reading,writers_counter-writting,reading,writting);
 
         random_time();
 
