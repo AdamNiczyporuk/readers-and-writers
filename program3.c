@@ -147,7 +147,11 @@ int main(int argc, char *argv[]) {
     // Konwersja argumentów na liczby całkowite
     R = stringToInt(argv[1]);
     W = stringToInt(argv[2]);
-
+    
+     if(R < 1 || W < 1) {
+        printf("Podaj poprawne liczby\n");
+        return 1; // Błąd: nieprawidłowe liczby
+    }
     // Inicjalizacja muteksu i zmiennych warunkowych
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond_reader, NULL);

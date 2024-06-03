@@ -102,6 +102,10 @@ int main(int argc, char *argv[]) {
 
     R = stringToInt(argv[1]); // Pobranie liczby czytelników z argumentu
     W = stringToInt(argv[2]); // Pobranie liczby pisarzy z argumentu
+    if(R < 1 || W < 1) {
+        printf("Podaj poprawne liczby\n");
+        return 1; // Błąd: nieprawidłowe liczby
+    }
 
     pthread_mutex_init(&mutex, NULL); // Inicjalizacja muteksu
     pthread_mutex_init(&lock_writer, NULL); // Inicjalizacja muteksu dla pisarzy

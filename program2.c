@@ -129,7 +129,11 @@ int main(int argc, char *argv[]) {
     }
     R = stringToInt(argv[1]); // Pobranie liczby czytelników z argumentu
     W = stringToInt(argv[2]); // Pobranie liczby pisarzy z argumentu
-
+    
+     if(R < 1 || W < 1) {
+        printf("Podaj poprawne liczby\n");
+        return 1; // Błąd: nieprawidłowe liczby
+    }
     // Inicjalizacja muteksów
     pthread_mutex_init(&reader_mutex, NULL);
     pthread_mutex_init(&writer_mutex, NULL);
