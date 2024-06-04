@@ -14,7 +14,7 @@
 
 
 
-// Program symulujący zagłodzenie czytelników w czytelni
+// Program symulujący zagłodzenie czytelników przed czytelnią
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -125,17 +125,17 @@ int main(int argc, char *argv[]) {
         pthread_create(&writers[i], NULL, writer, NULL);
     }
     // Oczekiwanie na zakończenie wątków czytelników
-    for (int i = 0; i < R; i++) {
-        pthread_join(readers[i], NULL);
-    }
+    //for (int i = 0; i < R; i++) {
+        pthread_join(readers[0], NULL);
+   // }
     // Oczekiwanie na zakończenie wątków pisarzy
-    for (int i = 0; i < W; i++) {
+    /*for (int i = 0; i < W; i++) {
         pthread_join(writers[i], NULL);
     }
 
     // Zniszczenie muteksów
     pthread_mutex_destroy(&mutex);
     pthread_mutex_destroy(&lock_writer);
-
+    */
     return 0;
 }
