@@ -32,11 +32,12 @@ int writers_counter = 0; // Licznik pisarzy
 int reading = 0; // Liczba aktualnie czytających czytelników
 int writing = 0; // Liczba aktualnie piszących pisarzy
 
-int waiting_writing = 0; // Liczba pisarzy czekających na pisanie
+int waiting_writers = 0; // Liczba pisarzy czekających na pisanie
+int waiting_readers = 0; // Liczba czytelników czekających na czytanie
 
 // Deklaracja muteksów
-pthread_mutex_t reader_mutex;
-pthread_mutex_t writer_mutex;
+pthread_mutex_t reading_variable_mutex;
+pthread_mutex_t waiting_writers_variable_mutex;
 pthread_mutex_t lock_writer;
 pthread_mutex_t lock_reader;
 
@@ -57,7 +58,7 @@ int stringToInt(const char *str) {
 }
 
 // Funkcja generująca losowy czas oczekiwania
-void random_wait_time() {
+void wait() {
     int wait_time = rand() % 1000000 + 1; // Generowanie losowego czasu oczekiwania
     usleep(wait_time); // Oczekiwanie przez losowy czas
 }
@@ -67,26 +68,26 @@ void* reader(void *r) {
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1) {
         pthread_mutex_lock(&lock_reader); // Blokada dla czytelników
-        pthread_mutex_lock(&reader_mutex); // Blokada zmiennej reading
+        pthread_mutex_lock(&reading_variable_mutex); // Blokada zmiennej reading
         if (reading == 0) {
             pthread_mutex_lock(&lock_writer); // Blokada dla pisarzy, jeśli żaden czytelnik nie czyta
         }
         reading++; // Zwiększenie liczby czytelników
         printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n", readers_counter - reading, writers_counter - writing, reading, writing);
 
-        pthread_mutex_unlock(&reader_mutex); // Odblokowanie zmiennej reading
+        pthread_mutex_unlock(&reading_variable_mutex); // Odblokowanie zmiennej reading
         pthread_mutex_unlock(&lock_reader); // Odblokowanie dla czytelników
 
-        random_wait_time(); // Symulacja czytania
+        wait(); // Symulacja czytania
 
-        pthread_mutex_lock(&reader_mutex); // Blokada zmiennej reading
+        pthread_mutex_lock(&reading_variable_mutex); // Blokada zmiennej reading
         reading--; // Zmniejszenie liczby czytelników
         if (reading == 0) {
             pthread_mutex_unlock(&lock_writer); // Odblokowanie dla pisarzy, jeśli żaden czytelnik nie czyta
         }
-        pthread_mutex_unlock(&reader_mutex); // Odblokowanie zmiennej reading
+        pthread_mutex_unlock(&reading_variable_mutex); // Odblokowanie zmiennej reading
 
-        random_wait_time(); // Symulacja czasu pomiędzy sesjami czytania
+        wait(); // Symulacja czasu pomiędzy sesjami czytania
     }
     return NULL;
 }
@@ -95,28 +96,28 @@ void* reader(void *r) {
 void* writer(void *w) {
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1) {
-        pthread_mutex_lock(&writer_mutex); // Blokada zmiennej waiting_writing
-        waiting_writing++; // Zwiększenie liczby czekających pisarzy
-        if (waiting_writing == 1) {
+        pthread_mutex_lock(&waiting_writers_variable_mutex); // Blokada zmiennej waiting_writing
+        waiting_writers++; // Zwiększenie liczby czekających pisarzy
+        if (waiting_writers == 1) {
             pthread_mutex_lock(&lock_reader); // Blokada dla czytelników, jeśli jest to pierwszy czekający pisarz
         }
-        pthread_mutex_unlock(&writer_mutex); // Odblokowanie zmiennej waiting_writing
+        pthread_mutex_unlock(&waiting_writers_variable_mutex); // Odblokowanie zmiennej waiting_writing
 
         pthread_mutex_lock(&lock_writer); // Blokada dla pisarzy
         writing++; // Zwiększenie liczby pisarzy
         printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n", readers_counter - reading, writers_counter - writing, reading, writing);
-        random_wait_time(); // Symulacja pisania
+        wait(); // Symulacja pisania
         writing--; // Zmniejszenie liczby pisarzy
         pthread_mutex_unlock(&lock_writer); // Odblokowanie dla pisarzy
 
-        pthread_mutex_lock(&writer_mutex); // Blokada zmiennej waiting_writing
-        waiting_writing--; // Zmniejszenie liczby czekających pisarzy
-        if (waiting_writing == 0) {
+        pthread_mutex_lock(&waiting_writers_variable_mutex); // Blokada zmiennej waiting_writing
+        waiting_writers--; // Zmniejszenie liczby czekających pisarzy
+        if (waiting_writers == 0) {
             pthread_mutex_unlock(&lock_reader); // Odblokowanie dla czytelników, jeśli nie ma więcej czekających pisarzy
         }
-        pthread_mutex_unlock(&writer_mutex); // Odblokowanie zmiennej waiting_writing
+        pthread_mutex_unlock(&waiting_writers_variable_mutex); // Odblokowanie zmiennej waiting_writing
 
-        random_wait_time(); // Symulacja czasu pomiędzy sesjami pisania
+        wait(); // Symulacja czasu pomiędzy sesjami pisania
     }
     return NULL;
 }
@@ -135,8 +136,8 @@ int main(int argc, char *argv[]) {
         return 1; // Błąd: nieprawidłowe liczby
     }
     // Inicjalizacja muteksów
-    pthread_mutex_init(&reader_mutex, NULL);
-    pthread_mutex_init(&writer_mutex, NULL);
+    pthread_mutex_init(&reading_variable_mutex, NULL);
+    pthread_mutex_init(&waiting_writers_variable_mutex, NULL);
     pthread_mutex_init(&lock_writer, NULL);
     pthread_mutex_init(&lock_reader, NULL);
 
@@ -155,13 +156,13 @@ int main(int argc, char *argv[]) {
         pthread_create(&writers[i], NULL, writer, NULL);
     }
     // Oczekiwanie na zakończenie wątków czytelników
-    for (int i = 0; i < R; i++) {
-        pthread_join(readers[i], NULL);
-    }
+    //for (int i = 0; i < R; i++) {
+        pthread_join(readers[0], NULL);
+    //}
     // Oczekiwanie na zakończenie wątków pisarzy
-    for (int i = 0; i < W; i++) {
-        pthread_join(writers[i], NULL);
-    }
+    //for (int i = 0; i < W; i++) {
+    //   pthread_join(writers[i], NULL);
+    //}
 
     return 0;
 }
