@@ -74,6 +74,7 @@ void *reader(void *r)
             // Wypisanie stanu kolejki i czytelni
             pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+            fflush(stdout); // Czyszczenie bufora
             pthread_mutex_unlock(&printf_mutex);     // Odblokowanie dostępu do funkcji printf                     // Zwiększenie liczby oczekujących czytelników
             pthread_cond_wait(&cond_reader, &mutex); // Oczekiwanie na zmienną warunkową czytelnika
         }
@@ -83,6 +84,7 @@ void *reader(void *r)
                                                // Wypisanie stanu kolejki i czytelni
             pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+            fflush(stdout); // Czyszczenie bufora
             pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
         }
 
@@ -95,6 +97,7 @@ void *reader(void *r)
                                            // Wypisanie stanu kolejki i czytelni
         pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+        fflush(stdout); // Czyszczenie bufora
         pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
         if (reading == 0)
         {
@@ -121,6 +124,7 @@ void *writer(void *w)
                                                // Wypisanie stanu kolejki i czytelni
             pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+            fflush(stdout); // Czyszczenie bufora
             pthread_mutex_unlock(&printf_mutex);     // Odblokowanie dostępu do funkcji printf
             pthread_cond_wait(&cond_writer, &mutex); // Oczekiwanie na zmienną warunkową pisarza
 
@@ -131,6 +135,7 @@ void *writer(void *w)
                                            // Wypisanie stanu kolejki i czytelni
         pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+        fflush(stdout); // Czyszczenie bufora
         pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
 
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
@@ -152,6 +157,7 @@ void *writer(void *w)
                                                   // Wypisanie stanu kolejki i czytelni
             pthread_mutex_lock(&printf_mutex);    // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
+            fflush(stdout); // Czyszczenie bufora
             pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
         }
 
