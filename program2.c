@@ -74,7 +74,7 @@ void* reader(void *r) {
         }
         reading++; // Zwiększenie liczby czytelników
         printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n", readers_counter - reading, writers_counter - writing, reading, writing);
-
+        fflush(stdout); // Czyszczenie bufora
         pthread_mutex_unlock(&reading_variable_mutex); // Odblokowanie zmiennej reading
         pthread_mutex_unlock(&lock_reader); // Odblokowanie dla czytelników
 
@@ -106,6 +106,7 @@ void* writer(void *w) {
         pthread_mutex_lock(&lock_writer); // Blokada dla pisarzy
         writing++; // Zwiększenie liczby pisarzy
         printf("ReaderQ: %d WriterQ: %d [in: R:%d W:%d]\n", readers_counter - reading, writers_counter - writing, reading, writing);
+        fflush(stdout); // Czyszczenie bufora
         wait(); // Symulacja pisania
         writing--; // Zmniejszenie liczby pisarzy
         pthread_mutex_unlock(&lock_writer); // Odblokowanie dla pisarzy
