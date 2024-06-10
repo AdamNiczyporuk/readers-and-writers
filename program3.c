@@ -12,10 +12,15 @@
 // ReaderQ: 11 WriterQ: 10 [in: R:0 W:1]
 // Oznacza to, że w kolejce przed czytelnią czeka 10 pisarzy i 11 czytelników, a sama czytelnia zajęta jest przez jednego pisarza. Komunikat należy wypisywać w momencie zmiany którejkolwiek z tych zmiennych.
 
+
+//OLIWA SPREAWIEDLIWA - NIE MA ZAGŁODZENIA
+
+
 #include <unistd.h>  // Biblioteka do funkcji usleep
 #include <stdio.h>   // Biblioteka do funkcji printf
 #include <pthread.h> // Biblioteka do tworzenia i zarządzania wątkami
 #include <stdlib.h>  // Biblioteka do funkcji związanych z alokacją pamięci, konwersją i generowaniem liczb losowych
+
 
 // Deklaracja zmiennych globalnych
 int R; // Liczba czytelników
