@@ -33,7 +33,6 @@ int waiting_writers = 0; // Liczba oczekujących pisarzy
 int waiting_readers = 0; // Liczba oczekujących czytelników
 
 pthread_mutex_t mutex;      // Muteks do synchronizacji dostępu do sekcji krytycznej
-pthread_mutex_t printf_mutex; // Muteks do synchronizacji wypisywania na ekran
 pthread_cond_t cond_reader; // Zmienna warunkowa dla czytelników
 pthread_cond_t cond_writer; // Zmienna warunkowa dla pisarzy
 
@@ -70,27 +69,25 @@ void *reader(void *r)
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1)
     {
-        // początek czytania
+        
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
 
         if (waiting_writers > 0 || writting > 0)
         { // Jeśli są oczekujący pisarze lub ktoś pisze
-            waiting_readers++;
+            waiting_readers++;// Zwiększenie liczby oczekujących czytelników
+
             // Wypisanie stanu kolejki i czytelni
-            pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
             fflush(stdout); // Czyszczenie bufora
-            pthread_mutex_unlock(&printf_mutex);     // Odblokowanie dostępu do funkcji printf                     // Zwiększenie liczby oczekujących czytelników
+                              
             pthread_cond_wait(&cond_reader, &mutex); // Oczekiwanie na zmienną warunkową czytelnika
         }
         else
         {
             reading++;                         // Zwiększenie liczby aktualnie czytających
                                                // Wypisanie stanu kolejki i czytelni
-            pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
             fflush(stdout); // Czyszczenie bufora
-            pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
         }
 
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
@@ -100,13 +97,11 @@ void *reader(void *r)
         pthread_mutex_lock(&mutex);        // Zablokowanie muteksu
         reading--;                         // Zmniejszenie liczby aktualnie czytających
                                            // Wypisanie stanu kolejki i czytelni
-        pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
         fflush(stdout); // Czyszczenie bufora
-        pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
-        if (reading == 0)
+        if (reading == 0) //jeśli nie ma w czytelni czytających
         {
-            pthread_cond_signal(&cond_writer); // Powiadomienie pisarzy, że można pisać
+            pthread_cond_signal(&cond_writer); // Powiadomienie jednego pisarza, że można pisać
         }
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
         wait();                       // Symulacja czasu oczekiwania przed ponownym czytaniem
@@ -120,37 +115,34 @@ void *writer(void *w)
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1)
     {
-        // początek pisania
+    
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
 
         if (reading > 0 || writting > 0)
         {                                      // Jeśli ktoś czyta lub pisze
             waiting_writers++;                 // Zwiększenie liczby oczekujących pisarzy
                                                // Wypisanie stanu kolejki i czytelni
-            pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
             fflush(stdout); // Czyszczenie bufora
-            pthread_mutex_unlock(&printf_mutex);     // Odblokowanie dostępu do funkcji printf
             pthread_cond_wait(&cond_writer, &mutex); // Oczekiwanie na zmienną warunkową pisarza
 
-            waiting_writers--;
+            waiting_writers--; // Zmniejszenie liczby oczekujących pisarzy
         }
 
         writting = 1;                      // Pisarz wszedł do czytelni
                                            // Wypisanie stanu kolejki i czytelni
-        pthread_mutex_lock(&printf_mutex); // Blokada dostępu do funkcji printf
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
         fflush(stdout); // Czyszczenie bufora
-        pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
 
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
         wait();                       // Symulacja czasu pisania
 
         // koniec pisania
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
-        writting = 0;               // Zresetowanie flagi pisania
+        writting = 0;               // Pisarz opuścił czytelnię
+                                    
 
-        if (waiting_readers == 0)
+        if (waiting_readers == 0) //jeżeli nie ma oczekujących czytelników
         {
             pthread_cond_signal(&cond_writer); // Powiadomienie jednego pisarza
         }
@@ -160,10 +152,8 @@ void *writer(void *w)
             reading = reading + waiting_readers;  // Aktualizacja liczby czytających
             waiting_readers = 0;                  // Resetowanie liczby oczekujących czytelników
                                                   // Wypisanie stanu kolejki i czytelni
-            pthread_mutex_lock(&printf_mutex);    // Blokada dostępu do funkcji printf
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
             fflush(stdout); // Czyszczenie bufora
-            pthread_mutex_unlock(&printf_mutex); // Odblokowanie dostępu do funkcji printf
         }
 
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
@@ -191,7 +181,6 @@ int main(int argc, char *argv[])
     }
     // Inicjalizacja muteksu i zmiennych warunkowych
     pthread_mutex_init(&mutex, NULL);
-    pthread_mutex_init(&printf_mutex, NULL); // Inicjalizacja muteksu dla zminennej pisarzy czekających na pisanie
     pthread_cond_init(&cond_reader, NULL);
     pthread_cond_init(&cond_writer, NULL);
 

@@ -32,7 +32,6 @@ int waiting_writers = 0; // Liczba oczekujących pisarzy
 int waiting_readers = 0; // Liczba oczekujących czytelników
 
 pthread_mutex_t mutex;      // Muteks do synchronizacji dostępu do sekcji krytycznej
-pthread_mutex_t printf_mutex; // Muteks do synchronizacji wypisywania na ekran
 pthread_cond_t cond_reader; // Zmienna warunkowa dla czytelników
 pthread_cond_t cond_writer; // Zmienna warunkowa dla pisarzy
 
@@ -69,16 +68,16 @@ void *reader(void *r)
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1)
     {
-        // początek czytania
+        
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
 
         if (writting > 0)
         { // Jeśli ktoś pisze
-            waiting_readers++;
+            waiting_readers++; // Zwiększenie liczby oczekujących czytelników
 
             // Wypisanie stanu kolejki i czytelni
             printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
-            fflush(stdout);
+            fflush(stdout); 
             pthread_cond_wait(&cond_reader, &mutex); // Oczekiwanie na zmienną warunkową czytelnika
         }
         else
@@ -99,7 +98,7 @@ void *reader(void *r)
       
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
         fflush(stdout);
-        if (reading == 0)
+        if (reading == 0) // jeśli nie ma w czytelni czytających
         {
             pthread_cond_signal(&cond_writer); // Powiadomienie pisarzy, że można pisać
         }
@@ -127,7 +126,7 @@ void *writer(void *w)
             fflush(stdout);
             pthread_cond_wait(&cond_writer, &mutex); // Oczekiwanie na zmienną warunkową pisarza
 
-            waiting_writers--;
+            waiting_writers--; // Zmniejszenie liczby oczekujących pisarzy
         }
 
         writting = 1;                      // Pisarz wszedł do czytelni
@@ -140,9 +139,10 @@ void *writer(void *w)
 
         // koniec pisania
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
-        writting = 0;               // Zresetowanie flagi pisania
+        writting = 0;               // Pisarz opuścił czytelnię
+                                   
 
-        if (waiting_readers == 0)
+        if (waiting_readers == 0) // Jeśli nie ma oczekujących czytelników
         {
             pthread_cond_signal(&cond_writer); // Powiadomienie jednego pisarza
         }
@@ -182,7 +182,6 @@ int main(int argc, char *argv[])
     }
     // Inicjalizacja muteksu i zmiennych warunkowych
     pthread_mutex_init(&mutex, NULL);
-    pthread_mutex_init(&printf_mutex, NULL); // Inicjalizacja muteksu dla zminennej pisarzy czekających na pisanie
     pthread_cond_init(&cond_reader, NULL);
     pthread_cond_init(&cond_writer, NULL);
 

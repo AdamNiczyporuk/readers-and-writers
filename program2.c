@@ -69,7 +69,7 @@ void *reader(void *r)
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1)
     {
-        // początek czytania
+       
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
 
         if (waiting_writers > 0 || writting > 0)
@@ -101,9 +101,9 @@ void *reader(void *r)
 
         printf("ReaderQ: %i WriterQ: %i [in: R: %i W: %i]\n", waiting_readers, waiting_writers, reading, writting);
         fflush(stdout); // Czyszczenie bufora
-        if (reading == 0)
+        if (reading == 0) //jeśli nie ma w czytelni czytających
         {
-            pthread_cond_signal(&cond_writer); // Powiadomienie pisarzy, że można pisać
+            pthread_cond_signal(&cond_writer); // Powiadomienie jednego pisarza, że można pisać
         }
         pthread_mutex_unlock(&mutex); // Odblokowanie muteksu
         wait();                       // Symulacja czasu oczekiwania przed ponownym czytaniem
@@ -117,7 +117,7 @@ void *writer(void *w)
     srand(time(NULL)); // Inicjalizacja generatora liczb losowych
     while (1)
     {
-        // początek pisania
+       
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
 
         if (reading > 0 || writting > 0)
@@ -142,9 +142,9 @@ void *writer(void *w)
 
         // koniec pisania
         pthread_mutex_lock(&mutex); // Zablokowanie muteksu
-        writting = 0;               // Zresetowanie flagi pisania
+        writting = 0;               // Pisarz opuścił czytelnię
 
-        if (waiting_writers > 0)
+        if (waiting_writers > 0) // Jeśli są oczekujący pisarze
         {
             pthread_cond_signal(&cond_writer); // Powiadomienie jednego pisarza
         }
